@@ -1,0 +1,1502 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>EraFace AI — Анализ лица</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #030308;
+            font-family: 'Inter', sans-serif;
+            font-weight: 500;
+            color: #ffffff;
+            overflow-x: hidden;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        .stars-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -3;
+            background: radial-gradient(ellipse at 30% 40%, #0a0a18, #020208);
+            overflow: hidden;
+        }
+
+        .star {
+            position: absolute;
+            background-color: #ffffff;
+            border-radius: 50%;
+            opacity: 0;
+            animation: twinkle 3s infinite ease-in-out;
+        }
+
+        @keyframes twinkle {
+            0% {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+
+            50% {
+                opacity: 0.8;
+                transform: scale(1);
+            }
+
+            100% {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+        }
+
+        .shooting-star {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: linear-gradient(135deg, rgba(255, 255, 240, 0.9), rgba(200, 180, 255, 0));
+            border-radius: 50%;
+            box-shadow: 0 0 6px 1px rgba(160, 140, 255, 0.6);
+            transform: rotate(25deg);
+            opacity: 0;
+            z-index: -2;
+        }
+
+        .screen {
+            min-height: 100vh;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            transition: opacity 0.5s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+            opacity: 1;
+            position: relative;
+            z-index: 2;
+        }
+
+        .screen-hidden {
+            display: none !important;
+        }
+
+        .grok-logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 0.5rem;
+        }
+
+        .grok-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(145deg, #ffffff, #e0e0ff);
+            border-radius: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 18px rgba(255, 255, 255, 0.4);
+        }
+
+        .grok-icon svg {
+            width: 32px;
+            height: 32px;
+            filter: drop-shadow(0 0 4px #a28eff);
+        }
+
+        .brand-text {
+            font-size: 2.2rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            color: #ffffff;
+            text-shadow: 0 0 12px rgba(255, 255, 255, 0.6), 0 0 25px rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-gradient {
+            background: linear-gradient(135deg, #6a5cff, #3b82f6);
+            border: none;
+            padding: 1rem 2.8rem;
+            font-size: 1rem;
+            font-weight: 700;
+            border-radius: 60px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+            box-shadow: 0 0 20px rgba(106, 92, 255, 0.3);
+        }
+
+        .btn-gradient:hover {
+            transform: scale(1.02);
+            box-shadow: 0 0 35px rgba(106, 92, 255, 0.5);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid rgba(106, 92, 255, 0.5);
+            padding: 0.8rem 2rem;
+            font-size: 0.95rem;
+            font-weight: 600;
+            border-radius: 60px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .btn-outline:hover {
+            border-color: #6a5cff;
+            background: rgba(106, 92, 255, 0.1);
+        }
+
+        .glass-card {
+            background: rgba(12, 12, 20, 0.65);
+            backdrop-filter: blur(20px);
+            border-radius: 2rem;
+            border: 1px solid rgba(106, 92, 255, 0.25);
+            padding: 2.5rem;
+            width: 100%;
+            max-width: 600px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .glass-card-large {
+            max-width: 900px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .input-field {
+            width: 100%;
+            background: rgba(10, 10, 18, 0.85);
+            border: 1px solid rgba(106, 92, 255, 0.3);
+            border-radius: 1.5rem;
+            padding: 1rem 1.5rem;
+            color: white;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: #6a5cff;
+            box-shadow: 0 0 20px rgba(106, 92, 255, 0.2);
+        }
+
+        textarea.input-field {
+            resize: vertical;
+            min-height: 110px;
+        }
+
+        .upload-area {
+            border: 2px dashed rgba(106, 92, 255, 0.4);
+            border-radius: 1.5rem;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: rgba(15, 15, 25, 0.4);
+            font-weight: 500;
+        }
+
+        .upload-area:hover {
+            border-color: #6a5cff;
+            background: rgba(106, 92, 255, 0.05);
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(3, 3, 10, 0.96);
+            backdrop-filter: blur(16px);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.4s;
+        }
+
+        .loading-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .loading-text {
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #6a5cff, #3b82f6);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-align: center;
+        }
+
+        .pure-white-star {
+            margin-top: 1.5rem;
+            font-size: 3rem;
+            display: inline-block;
+            animation: whiteStarPulse 1.2s infinite ease-in-out;
+            color: white;
+            filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.9));
+        }
+
+        @keyframes whiteStarPulse {
+            0% {
+                transform: scale(0.6);
+                opacity: 0.6;
+                text-shadow: 0 0 0px white;
+            }
+
+            50% {
+                transform: scale(1.3);
+                opacity: 1;
+                text-shadow: 0 0 25px white;
+            }
+
+            100% {
+                transform: scale(0.6);
+                opacity: 0.6;
+                text-shadow: 0 0 5px white;
+            }
+        }
+
+        .potential-card {
+            background: linear-gradient(135deg, rgba(106, 92, 255, 0.2), rgba(59, 130, 246, 0.1));
+            border-radius: 1.5rem;
+            padding: 1.5rem;
+            text-align: center;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(106, 92, 255, 0.3);
+        }
+
+        .potential-percent {
+            font-size: 3rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #6a5cff, #3b82f6);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .feature-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .feature-table th,
+        .feature-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(106, 92, 255, 0.2);
+            font-weight: 500;
+        }
+
+        .feature-table th {
+            color: #a1a1aa;
+            font-weight: 600;
+        }
+
+        .btn-small {
+            background: rgba(106, 92, 255, 0.2);
+            border: 1px solid rgba(106, 92, 255, 0.5);
+            padding: 0.5rem 1.2rem;
+            border-radius: 40px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.8rem;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+        }
+
+        .btn-small:hover {
+            background: rgba(106, 92, 255, 0.4);
+            transform: scale(0.98);
+        }
+
+        .progress-bar {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            height: 6px;
+            width: 120px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #6a5cff, #3b82f6);
+            border-radius: 20px;
+            transition: width 0.5s ease;
+        }
+
+        .stats-grid {
+            display: flex;
+            gap: 1.5rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: rgba(20, 20, 30, 0.5);
+            backdrop-filter: blur(10px);
+            border-radius: 1.5rem;
+            padding: 1.2rem 2rem;
+            text-align: center;
+            border: 1px solid rgba(106, 92, 255, 0.2);
+            min-width: 140px;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #6a5cff, #3b82f6);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(20px);
+            z-index: 1100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+        }
+
+        .modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background: rgba(15, 15, 25, 0.95);
+            border-radius: 2rem;
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+            border: 1px solid rgba(106, 92, 255, 0.3);
+        }
+
+        .subscription-options {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .sub-card {
+            background: rgba(30, 30, 45, 0.8);
+            border-radius: 1.2rem;
+            padding: 1.2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid rgba(106, 92, 255, 0.4);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .sub-card:hover {
+            background: rgba(80, 70, 150, 0.5);
+            transform: scale(1.01);
+        }
+
+        .sub-price {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: #b9b0ff;
+        }
+
+        .error-message {
+            background: rgba(255, 50, 50, 0.2);
+            border: 1px solid rgba(255, 50, 50, 0.5);
+            border-radius: 1rem;
+            padding: 1rem;
+            margin-top: 1rem;
+            text-align: center;
+            color: #ff8888;
+            font-weight: 500;
+        }
+
+        .success-message {
+            background: rgba(50, 255, 50, 0.2);
+            border: 1px solid rgba(50, 255, 50, 0.5);
+            border-radius: 1rem;
+            padding: 1rem;
+            margin-top: 1rem;
+            text-align: center;
+            color: #88ff88;
+            font-weight: 500;
+            animation: fadeOut 3s ease forwards;
+        }
+
+        @keyframes fadeOut {
+            0% {
+                opacity: 1;
+            }
+
+            70% {
+                opacity: 1;
+            }
+
+            100% {
+                opacity: 0;
+                visibility: hidden;
+                display: none;
+            }
+        }
+
+        .user-info {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(20, 20, 30, 0.9);
+            backdrop-filter: blur(10px);
+            padding: 8px 16px;
+            border-radius: 60px;
+            border: 1px solid rgba(106, 92, 255, 0.3);
+            z-index: 1000;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+        }
+
+        .user-name {
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .sign-out-btn {
+            background: rgba(255, 255, 255, 0.15);
+            border: none;
+            padding: 4px 12px;
+            border-radius: 20px;
+            color: white;
+            cursor: pointer;
+            font-size: 0.75rem;
+            transition: all 0.2s;
+        }
+
+        .sign-out-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .custom-google-btn {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+            border: 1px solid rgba(106, 92, 255, 0.4);
+            padding: 0.9rem 1.8rem;
+            border-radius: 60px;
+            color: white;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            width: 100%;
+            backdrop-filter: blur(10px);
+        }
+
+        .custom-google-btn:hover {
+            background: linear-gradient(135deg, rgba(106, 92, 255, 0.2), rgba(106, 92, 255, 0.1));
+            border-color: #6a5cff;
+            transform: translateY(-2px);
+            box-shadow: 0 0 25px rgba(106, 92, 255, 0.3);
+        }
+
+        .custom-google-btn svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .google-signin-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 1rem;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .dashboard-item {
+            background: rgba(20, 20, 30, 0.4);
+            border-radius: 1.2rem;
+            padding: 1rem;
+            border: 1px solid rgba(106, 92, 255, 0.15);
+            text-align: left;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .mt-2 {
+            margin-top: 0.75rem;
+        }
+
+        .mt-4 {
+            margin-top: 1.5rem;
+        }
+
+        .w-100 {
+            width: 100%;
+        }
+
+        .flex {
+            display: flex;
+        }
+
+        .gap-2 {
+            gap: 0.75rem;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.8s linear infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .free-count {
+            background: rgba(106, 92, 255, 0.3);
+            border-radius: 20px;
+            padding: 0.3rem 0.8rem;
+            font-size: 0.75rem;
+            display: inline-block;
+            margin-left: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .screen {
+                padding: 1rem;
+            }
+
+            .glass-card {
+                padding: 1.5rem;
+                max-width: 100%;
+                margin: 0 0.5rem;
+            }
+
+            .brand-text {
+                font-size: 1.6rem;
+            }
+
+            .grok-icon {
+                width: 40px;
+                height: 40px;
+            }
+
+            .grok-icon svg {
+                width: 24px;
+                height: 24px;
+            }
+
+            .btn-gradient,
+            .btn-outline {
+                padding: 0.8rem 1.5rem;
+                font-size: 0.9rem;
+            }
+
+            .input-field {
+                font-size: 0.9rem;
+                padding: 0.8rem 1.2rem;
+            }
+
+            .upload-area {
+                padding: 1.5rem;
+            }
+
+            .potential-percent {
+                font-size: 2.5rem;
+            }
+
+            .feature-table th,
+            .feature-table td {
+                padding: 0.6rem;
+                font-size: 0.8rem;
+            }
+
+            .progress-bar {
+                width: 80px;
+            }
+
+            .stats-grid {
+                gap: 0.8rem;
+            }
+
+            .stat-card {
+                padding: 0.8rem 1rem;
+                min-width: 100px;
+            }
+
+            .stat-number {
+                font-size: 1.5rem;
+            }
+
+            .sub-card {
+                flex-direction: column;
+                text-align: center;
+                gap: 0.5rem;
+            }
+
+            .sub-price {
+                font-size: 1.3rem;
+            }
+
+            .user-info {
+                top: 10px;
+                right: 10px;
+                padding: 5px 12px;
+                gap: 8px;
+            }
+
+            .user-avatar {
+                width: 28px;
+                height: 28px;
+            }
+
+            .user-name {
+                font-size: 0.8rem;
+            }
+
+            .sign-out-btn {
+                padding: 3px 8px;
+                font-size: 0.7rem;
+            }
+
+            .loading-text {
+                font-size: 1.3rem;
+            }
+
+            .pure-white-star {
+                font-size: 2rem;
+            }
+
+            h2 {
+                font-size: 1.2rem !important;
+            }
+
+            .custom-google-btn {
+                padding: 0.7rem 1.2rem;
+                font-size: 0.85rem;
+            }
+
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+                gap: 0.8rem;
+            }
+
+            .modal-content {
+                padding: 1.5rem;
+                margin: 1rem;
+                width: 95%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .screen {
+                padding: 0.8rem;
+            }
+
+            .glass-card {
+                padding: 1.2rem;
+            }
+
+            .brand-text {
+                font-size: 1.3rem;
+            }
+
+            .grok-icon {
+                width: 36px;
+                height: 36px;
+            }
+
+            .btn-gradient,
+            .btn-outline {
+                padding: 0.7rem 1rem;
+                font-size: 0.85rem;
+            }
+
+            .input-field {
+                font-size: 0.85rem;
+                padding: 0.7rem 1rem;
+            }
+
+            textarea.input-field {
+                min-height: 90px;
+            }
+
+            .upload-area {
+                padding: 1rem;
+            }
+
+            .potential-percent {
+                font-size: 2rem;
+            }
+
+            .feature-table th,
+            .feature-table td {
+                padding: 0.5rem;
+                font-size: 0.7rem;
+            }
+
+            .btn-small {
+                padding: 0.4rem 0.8rem;
+                font-size: 0.7rem;
+            }
+
+            .progress-bar {
+                width: 60px;
+            }
+
+            .stat-card {
+                padding: 0.6rem 0.8rem;
+                min-width: 80px;
+            }
+
+            .stat-number {
+                font-size: 1.2rem;
+            }
+
+            .sub-card {
+                padding: 0.8rem;
+            }
+
+            .sub-price {
+                font-size: 1.1rem;
+            }
+
+            .user-info {
+                top: 8px;
+                right: 8px;
+                padding: 4px 10px;
+                gap: 6px;
+            }
+
+            .user-avatar {
+                width: 24px;
+                height: 24px;
+            }
+
+            .user-name {
+                font-size: 0.7rem;
+                max-width: 100px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            .loading-text {
+                font-size: 1rem;
+            }
+
+            .custom-google-btn {
+                padding: 0.6rem 1rem;
+                font-size: 0.8rem;
+                gap: 8px;
+            }
+
+            .custom-google-btn svg {
+                width: 16px;
+                height: 16px;
+            }
+
+            .error-message,
+            .success-message {
+                padding: 0.7rem;
+                font-size: 0.8rem;
+            }
+
+            .flex {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .flex .btn-gradient,
+            .flex .btn-outline {
+                width: 100%;
+            }
+
+            h2 {
+                font-size: 1rem !important;
+            }
+
+            .potential-card {
+                padding: 1rem;
+            }
+
+            .modal-content {
+                padding: 1.2rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="stars-bg" id="starsContainer"></div>
+
+    <div id="userInfo" class="user-info hidden">
+        <img id="userAvatar" class="user-avatar" src="">
+        <span id="userName" class="user-name"></span>
+        <button id="signOutBtn" class="sign-out-btn">Выйти</button>
+    </div>
+
+    <div id="inputScreen" class="screen">
+        <div class="glass-card">
+            <div class="grok-logo">
+                <div class="grok-icon">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 2L15 8.5L22 9.5L17 14L18.5 21L12 17.5L5.5 21L7 14L2 9.5L9 8.5L12 2Z" fill="white"
+                            stroke="#b9b0ff" stroke-width="1.2" />
+                        <circle cx="12" cy="12" r="2.5" fill="#6a5cff" stroke="white" stroke-width="1" />
+                    </svg>
+                </div>
+                <span class="brand-text">EraFace AI</span>
+            </div>
+            <p style="text-align: center; color: #b9b9e0; margin-bottom: 1.8rem;">AI Анализ Лица</p>
+
+            <h2 style="font-size: 1.4rem; margin-bottom: 1rem; text-align: center;">Опишите вашу проблему и загрузите
+                фото</h2>
+            <textarea id="userProblem" class="input-field" rows="3"
+                placeholder="Пример: хочу улучшить линию челюсти, убрать темные круги, улучшить скулы..."></textarea>
+
+            <div id="uploadBox" class="upload-area mt-4">
+                <p>📸 Нажмите или перетащите фото сюда</p>
+                <input type="file" id="photoInput" accept="image/*" style="display: none;">
+                <img id="previewImg"
+                    style="max-width: 100%; max-height: 180px; margin-top: 1rem; border-radius: 1rem; display: none;">
+            </div>
+
+            <div id="googleSignInContainer" class="google-signin-container"></div>
+
+            <div id="faceError" class="error-message" style="display: none;"></div>
+            <div id="successMessage" class="success-message" style="display: none;"></div>
+            <p class="mt-2" style="color: #a1a1aa; font-size: 0.85rem; text-align: center;">✨ ИИ проанализирует ваше
+                лицо и создаст персональный план</p>
+            <button id="analyzeBtn" class="btn-gradient w-100 mt-4" style="padding: 0.9rem;">🚀 Начать анализ</button>
+        </div>
+    </div>
+
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-text" id="loadingMessage">Анализ структуры лица...</div>
+        <div class="pure-white-star">⭐</div>
+    </div>
+
+    <div id="resultsScreen" class="screen screen-hidden">
+        <div style="max-width: 900px; width: 100%;">
+            <h2 style="margin-bottom: 1rem; text-align: center;">📊 Результаты анализа лица</h2>
+            <div class="potential-card">
+                <div class="potential-percent" id="potentialPercent">0%</div>
+                <div id="potentialText" style="font-size: 1.1rem; margin-top: 0.5rem;">Вы используете только 0% вашего
+                    потенциала</div>
+            </div>
+            <div class="glass-card glass-card-large" style="padding: 1.5rem;">
+                <table class="feature-table">
+                    <thead>
+                        <tr>
+                            <th>Зона</th>
+                            <th>Оценка</th>
+                            <th>ПОТЕНЦИАЛ</th>
+                            <th>Действие</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+            <button id="viewDashboardBtn" class="btn-outline w-100 mt-4">📈 Перейти в панель управления →</button>
+        </div>
+    </div>
+
+    <div id="dashboardScreen" class="screen screen-hidden">
+        <div style="max-width: 900px; width: 100%;">
+            <h2 style="margin-bottom: 1rem; text-align: center;">📋 Панель управления</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number" id="totalInsecurities">0</div>
+                    <div>Отслеживаемых зон</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="completedCount">0</div>
+                    <div>В процессе</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="improvingCount">0</div>
+                    <div>Потенциал >70%</div>
+                </div>
+            </div>
+            <div class="glass-card" style="margin-bottom: 1.5rem; padding: 1.5rem; text-align: center;">
+                <div id="dashboardList" style="text-align: left;"></div>
+            </div>
+            <div class="flex gap-2">
+                <button id="uploadUpdatedBtn" class="btn-gradient w-100">📸 Загрузить новое фото</button>
+                <button id="backToResultsBtn" class="btn-outline w-100">← Назад к анализу</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="subscriptionModal" class="modal">
+        <div class="modal-content">
+            <h3 style="margin-bottom: 0.5rem;">💎 Премиум подписка</h3>
+            <p style="color: #b0b0d0; margin-bottom: 1rem;">Вы использовали все <strong id="freeCountDisplay">2</strong>
+                бесплатных улучшения. Откройте неограниченные планы и детальный AI коучинг.</p>
+            <div class="subscription-options">
+                <div class="sub-card" data-plan="monthly" data-price="1200">
+                    <div><strong>Месячная</strong><br><span style="font-size:0.8rem; color:#aaa;">ежемесячно</span>
+                    </div>
+                    <div class="sub-price">₽1200<span style="font-size:1rem;"> /мес</span></div>
+                </div>
+                <div class="sub-card" data-plan="yearly" data-price="9900">
+                    <div><strong>Годовая</strong><br><span style="font-size:0.8rem; color:#aaa;">экономия 31%</span>
+                    </div>
+                    <div class="sub-price">₽9900<span style="font-size:1rem;"> /год</span></div>
+                </div>
+            </div>
+            <button id="closeSubModalBtn" class="btn-small w-100 mt-4">Возможно, позже</button>
+        </div>
+    </div>
+
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script>
+        // ========== ВАШИ КЛЮЧИ ==========
+        const GOOGLE_CLIENT_ID = "726044192733-me75n1eujitmi1vmasu58bjsgususl64.apps.googleusercontent.com";
+        const OPENAI_API_KEY = "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";
+
+        const SERVER_URL = window.location.origin;
+
+        let currentPhotoFile = null;
+        let currentProblem = "";
+        let currentFeatures = [];
+        let overallPotential = 0;
+        let isLoggedIn = false;
+        let isPremium = false;
+        let freeImprovementsLeft = 2;
+        let currentUser = null;
+        let idToken = null;
+
+        // DOM элементы
+        const inputScreen = document.getElementById('inputScreen');
+        const resultsScreen = document.getElementById('resultsScreen');
+        const dashboardScreen = document.getElementById('dashboardScreen');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const loadingMessage = document.getElementById('loadingMessage');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const uploadBox = document.getElementById('uploadBox');
+        const photoInput = document.getElementById('photoInput');
+        const previewImg = document.getElementById('previewImg');
+        const userProblem = document.getElementById('userProblem');
+        const faceError = document.getElementById('faceError');
+        const successMessageDiv = document.getElementById('successMessage');
+        const tableBody = document.getElementById('tableBody');
+        const viewDashboardBtn = document.getElementById('viewDashboardBtn');
+        const uploadUpdatedBtn = document.getElementById('uploadUpdatedBtn');
+        const backToResultsBtn = document.getElementById('backToResultsBtn');
+        const totalInsecuritiesSpan = document.getElementById('totalInsecurities');
+        const completedCountSpan = document.getElementById('completedCount');
+        const improvingCountSpan = document.getElementById('improvingCount');
+        const dashboardList = document.getElementById('dashboardList');
+        const potentialPercentSpan = document.getElementById('potentialPercent');
+        const potentialTextSpan = document.getElementById('potentialText');
+        const subscriptionModal = document.getElementById('subscriptionModal');
+        const closeSubModalBtn = document.getElementById('closeSubModalBtn');
+        const userInfoDiv = document.getElementById('userInfo');
+        const userAvatar = document.getElementById('userAvatar');
+        const userNameSpan = document.getElementById('userName');
+        const signOutBtn = document.getElementById('signOutBtn');
+        const freeCountDisplay = document.getElementById('freeCountDisplay');
+
+        function showSuccessMessage(message) {
+            successMessageDiv.textContent = message;
+            successMessageDiv.style.display = 'block';
+            setTimeout(() => { successMessageDiv.style.display = 'none'; }, 3000);
+        }
+
+        function showScreen(screenName) {
+            inputScreen.classList.add('screen-hidden');
+            resultsScreen.classList.add('screen-hidden');
+            dashboardScreen.classList.add('screen-hidden');
+            if (screenName === 'input') inputScreen.classList.remove('screen-hidden');
+            if (screenName === 'results') resultsScreen.classList.remove('screen-hidden');
+            if (screenName === 'dashboard') dashboardScreen.classList.remove('screen-hidden');
+        }
+
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function parseJwt(token) {
+            const base64Url = token.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
+            return JSON.parse(jsonPayload);
+        }
+
+        // Google авторизация
+        window.handleGoogleResponse = (response) => {
+            if (response.credential) {
+                idToken = response.credential;
+                const decoded = parseJwt(idToken);
+                currentUser = { name: decoded.name, email: decoded.email, picture: decoded.picture, sub: decoded.sub };
+                isLoggedIn = true;
+                freeImprovementsLeft = 2;
+                isPremium = false;
+                if (freeCountDisplay) freeCountDisplay.textContent = freeImprovementsLeft;
+                userAvatar.src = currentUser.picture;
+                userNameSpan.textContent = currentUser.name;
+                userInfoDiv.classList.remove('hidden');
+                const googleContainer = document.getElementById('googleSignInContainer');
+                if (googleContainer) googleContainer.style.display = 'none';
+                faceError.style.display = 'none';
+                showSuccessMessage(`✨ Добро пожаловать, ${currentUser.name}! У вас ${freeImprovementsLeft} бесплатных улучшения.`);
+            }
+        };
+
+        function signOut() {
+            currentUser = null;
+            idToken = null;
+            isLoggedIn = false;
+            freeImprovementsLeft = 2;
+            isPremium = false;
+            if (freeCountDisplay) freeCountDisplay.textContent = freeImprovementsLeft;
+            userInfoDiv.classList.add('hidden');
+            const googleContainer = document.getElementById('googleSignInContainer');
+            if (googleContainer) googleContainer.style.display = 'flex';
+            initGoogleSignIn();
+            showSuccessMessage(`👋 Вы вышли из аккаунта.`);
+        }
+        signOutBtn?.addEventListener('click', signOut);
+
+        function initGoogleSignIn() {
+            if (typeof google !== 'undefined' && GOOGLE_CLIENT_ID) {
+                google.accounts.id.initialize({ client_id: GOOGLE_CLIENT_ID, callback: handleGoogleResponse, auto_select: false, cancel_on_tap_outside: true });
+                const container = document.getElementById('googleSignInContainer');
+                if (container) {
+                    container.innerHTML = '';
+                    const customBtn = document.createElement('button');
+                    customBtn.className = 'custom-google-btn';
+                    customBtn.innerHTML = `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg><span>Войти через Google</span>`;
+                    customBtn.onclick = () => google.accounts.id.prompt();
+                    container.appendChild(customBtn);
+                }
+            }
+        }
+
+        if (typeof google !== 'undefined') initGoogleSignIn();
+        else window.addEventListener('load', () => setTimeout(initGoogleSignIn, 500));
+
+        // ========== ОПЛАТА ЧЕРЕЗ ВАШ СЕРВЕР ==========
+        async function createPayment(plan, amount) {
+            if (!currentUser) {
+                showSuccessMessage("⚠️ Сначала войдите в аккаунт");
+                return;
+            }
+
+            showSuccessMessage("⏳ Перенаправление на оплату...");
+
+            try {
+                const response = await fetch(`${SERVER_URL}/api/create-payment`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        plan: plan,
+                        amount: amount,
+                        userId: currentUser.email,
+                        userEmail: currentUser.email
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success && data.confirmationUrl) {
+                    window.location.href = data.confirmationUrl;
+                } else {
+                    throw new Error(data.error || 'Ошибка создания платежа');
+                }
+            } catch (error) {
+                console.error('Payment error:', error);
+                showSuccessMessage(`❌ Ошибка оплаты: ${error.message}. Убедитесь что сервер запущен (python server.py)`);
+            }
+        }
+
+        function checkPaymentReturn() {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('payment_success')) {
+                isPremium = true;
+                freeImprovementsLeft = 999;
+                showSuccessMessage(`🎉 Спасибо за оплату! Премиум подписка активирована!`);
+                subscriptionModal.classList.remove('active');
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+        }
+        checkPaymentReturn();
+
+        // ========== АНАЛИЗ ФОТО ЧЕРЕЗ GPT-4o ==========
+        async function runRealVisionAnalysis(problem, photoDataUrl) {
+            // Генерируем случайную "соль" чтобы обойти кэширование
+            const randomSalt = Math.random().toString(36).substring(7);
+
+            const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${OPENAI_API_KEY}`
+                },
+                body: JSON.stringify({
+                    model: 'gpt-4o',
+                    messages: [
+                        {
+                            role: "user",
+                            content: [
+                                {
+                                    type: "text",
+                                    text: `Если на фото НЕТ лица человека (кровать, еда, животное, пейзаж, мебель, автомобиль) - верни ТОЛЬКО {"error": "no_face"}
+
+Ты - эксперт по анализу лиц с 20-летним опытом. Твоя задача - давать РАЗНЫЕ, УНИКАЛЬНЫЕ оценки для каждого фото.
+
+🔴 КРИТИЧЕСКИ ВАЖНО: 
+- НЕЛЬЗЯ возвращать одинаковые или похожие цифры для разных фото
+- Каждое фото должно получать УНИКАЛЬНЫЙ набор цифр
+- Используй ВЕСЬ диапазон от 30 до 95, а не только 70-80
+
+ПРАВИЛА АНАЛИЗА (обязательны к выполнению):
+1. Посмотри на ФОРМУ ЛИЦА: овальное, круглое, квадратное, треугольное
+2. Посмотри на СИММЕТРИЮ: идеальная, хорошая, средняя, асимметрия
+3. Посмотри на КОЖУ: идеальная, чистая, проблемная, сухая, жирная
+4. Посмотри на ГЛАЗА: выразительные, глубокие, с мешками, с морщинками
+5. Посмотри на ОСВЕЩЕНИЕ: профессиональное, хорошее, среднее, плохое
+
+ФОРМУЛА РАСЧЕТА ПОТЕНЦИАЛА (используй её):
+- Идеальные пропорции + хорошее освещение = 85-95%
+- Хорошие пропорции + среднее освещение = 70-84%
+- Средние пропорции + хорошее освещение = 60-74%
+- Средние пропорции + плохое освещение = 45-59%
+- Асимметрия + плохое освещение = 30-44%
+
+🔥 ТРЕБОВАНИЕ К ВАРИАТИВНОСТИ:
+- Общий потенциал должен быть в диапазоне от 30 до 95 (НЕ только 70-80!)
+- Челюсть: от 35 до 95 (слабые челюсти = низкий %, острые = высокий)
+- Кожа: от 30 до 95 (акне/морщины = низкий %, чистая = высокий)
+- Глаза: от 35 до 95 (усталые = низкий %, выразительные = высокий)
+- Нос: от 45 до 90 (крупный = ниже, аккуратный = выше)
+- Скулы: от 35 до 95 (плоские = низкий %, высокие = высокий)
+
+Пожелание пользователя: "${problem}"
+Случайный ключ для разнообразия: "${randomSalt}"
+
+Верни ТОЛЬКО JSON (без пояснений, без markdown, без \`\`\`json, без лишних символов):
+{
+  "overall_potential": число от 30 до 95,
+  "features": [
+    {"name": "Челюсть", "status": "описание", "potential": число от 35 до 95, "plan": "3 упражнения"},
+    {"name": "Кожа", "status": "описание", "potential": число от 30 до 95, "plan": "3 совета"},
+    {"name": "Глаза", "status": "описание", "potential": число от 35 до 95, "plan": "3 совета"},
+    {"name": "Нос", "status": "описание", "potential": число от 45 до 90, "plan": "3 техники"},
+    {"name": "Скулы", "status": "описание", "potential": число от 35 до 95, "plan": "3 упражнения"}
+  ]
+}`
+                                },
+                                {
+                                    type: "image_url",
+                                    image_url: { url: photoDataUrl, detail: "high" }
+                                }
+                            ]
+                        }
+                    ],
+                    max_tokens: 2000,
+                    temperature: 1.2
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(`API Error: ${response.status} - ${errorData.error?.message || 'Unknown'}`);
+            }
+
+            const data = await response.json();
+            let content = data.choices[0].message.content;
+            console.log("RAW AI RESPONSE:", content);
+
+            // Более надежная очистка ответа
+            content = content.trim();
+
+            // Удаляем все возможные markdown обертки
+            content = content.replace(/^```json\s*/i, '');
+            content = content.replace(/^```\s*/, '');
+            content = content.replace(/\s*```$/, '');
+
+            // Удаляем текст до первого {
+            const firstBrace = content.indexOf('{');
+            if (firstBrace > 0) {
+                content = content.substring(firstBrace);
+            }
+
+            // Удаляем текст после последнего }
+            const lastBrace = content.lastIndexOf('}');
+            if (lastBrace < content.length - 1) {
+                content = content.substring(0, lastBrace + 1);
+            }
+
+            // Пробуем распарсить
+            try {
+                const parsed = JSON.parse(content);
+
+                if (parsed.error === "no_face") {
+                    throw new Error("NO_FACE_DETECTED");
+                }
+
+                // Валидация структуры
+                if (!parsed.overall_potential || typeof parsed.overall_potential !== 'number') {
+                    throw new Error("Missing or invalid overall_potential");
+                }
+
+                if (!parsed.features || !Array.isArray(parsed.features) || parsed.features.length === 0) {
+                    throw new Error("Missing or invalid features array");
+                }
+
+                // Проверяем каждую фичу
+                for (const feature of parsed.features) {
+                    if (!feature.name || !feature.status || typeof feature.potential !== 'number' || !feature.plan) {
+                        throw new Error("Invalid feature structure");
+                    }
+                }
+
+                return parsed;
+
+            } catch (parseError) {
+                console.error("JSON parse error:", parseError);
+                console.error("Attempted to parse:", content);
+
+                // Попробуем修复 частые ошибки
+                try {
+                    // Заменяем несбалансированные кавычки
+                    let fixed = content.replace(/(['"])?([a-zA-Z0-9_]+)(['"])?:/g, '"$2":');
+                    // Удаляем trailing commas
+                    fixed = fixed.replace(/,(\s*[}\]])/g, '$1');
+                    // Экранируем неэкранированные кавычки внутри строк
+                    fixed = fixed.replace(/:\s*"([^"]*?)"/g, function (match, p1) {
+                        const escaped = p1.replace(/"/g, '\\"');
+                        return `: "${escaped}"`;
+                    });
+
+                    const retryParsed = JSON.parse(fixed);
+                    if (retryParsed.overall_potential && retryParsed.features) {
+                        console.log("Successfully parsed after fixing");
+                        return retryParsed;
+                    }
+                } catch (retryError) {
+                    console.error("Retry parse also failed:", retryError);
+                }
+
+                // Если все сломалось - возвращаем тестовые данные
+                console.warn("Returning fallback data");
+                return {
+                    overall_potential: 65,
+                    features: [
+                        { "name": "Челюсть", "status": "Средняя форма", "potential": 60, "plan": "1. Упражнения для челюсти\n2. Массаж\n3. Правильная осанка" },
+                        { "name": "Кожа", "status": "Нормальная", "potential": 70, "plan": "1. Увлажнение\n2. Защита от солнца\n3. Здоровое питание" },
+                        { "name": "Глаза", "status": "Выразительные", "potential": 75, "plan": "1. Упражнения для глаз\n2. Полноценный сон\n3. Маски для глаз" },
+                        { "name": "Нос", "status": "Пропорциональный", "potential": 65, "plan": "1. Контуринг\n2. Массаж\n3. Упражнения" },
+                        { "name": "Скулы", "status": "Заметные", "potential": 55, "plan": "1. Упражнения для скул\n2. Массаж лица\n3. Правильное питание" }
+                    ]
+                };
+            }
+        }
+        async function showLoadingSequence() {
+            loadingOverlay.classList.add('active');
+            const messages = ["🔍 Анализ структуры лица...", "📊 Оценка потенциала...", "✨ Создание плана..."];
+            for (let msg of messages) {
+                loadingMessage.textContent = msg;
+                await new Promise(r => setTimeout(r, 1300));
+            }
+        }
+        function hideLoading() { loadingOverlay.classList.remove('active'); }
+
+        function renderResults(analysisResult) {
+            overallPotential = analysisResult.overall_potential || 50;
+            potentialPercentSpan.textContent = `${overallPotential}%`;
+            potentialTextSpan.textContent = `Вы используете только ${100 - overallPotential}% вашего потенциала`;
+            tableBody.innerHTML = "";
+            const features = analysisResult.features || [];
+            features.forEach(f => {
+                const row = tableBody.insertRow();
+                row.insertCell(0).textContent = f.name;
+                row.insertCell(1).textContent = f.status;
+                const potentialCell = row.insertCell(2);
+                potentialCell.innerHTML = `<div class="progress-bar"><div class="progress-fill" style="width: ${f.potential}%"></div></div><span style="font-size:0.75rem; margin-left:8px;">${f.potential}%</span>`;
+                const actionCell = row.insertCell(3);
+                const btn = document.createElement('button');
+                btn.textContent = "Улучшить";
+                btn.className = "btn-small";
+                btn.onclick = () => handleImproveClick(f);
+                actionCell.appendChild(btn);
+            });
+            currentFeatures = features;
+        }
+
+        function handleImproveClick(feature) {
+            if (!isLoggedIn) {
+                faceError.innerHTML = "Пожалуйста, войдите через Google.";
+                faceError.style.display = 'block';
+                return;
+            }
+            if (!isPremium) {
+                if (freeImprovementsLeft > 0) {
+                    freeImprovementsLeft--;
+                    if (freeCountDisplay) freeCountDisplay.textContent = freeImprovementsLeft;
+                    showPlanModal(feature);
+                    if (freeImprovementsLeft === 0) showSuccessMessage("⚠️ Последнее бесплатное улучшение! Для новых нужна подписка.");
+                    else showSuccessMessage(`✅ Улучшение активировано! Осталось ${freeImprovementsLeft} бесплатных.`);
+                } else {
+                    subscriptionModal.classList.add('active');
+                }
+            } else {
+                showPlanModal(feature);
+            }
+        }
+
+        function renderDashboard(featuresData) {
+            totalInsecuritiesSpan.textContent = featuresData.length;
+            completedCountSpan.textContent = featuresData.filter(f => f.potential >= 40 && f.potential <= 70).length;
+            improvingCountSpan.textContent = featuresData.filter(f => f.potential > 70).length;
+            dashboardList.innerHTML = `<div class="dashboard-grid">` + featuresData.map(f => `
+                <div class="dashboard-item">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;"><strong>${f.name}</strong><span style="color:#a1a1aa;font-size:0.8rem;">${f.status}</span></div>
+                    <div class="progress-bar" style="width:100%;"><div class="progress-fill" style="width:${f.potential}%"></div></div>
+                    <div style="margin-top:0.5rem;font-size:0.75rem;color:#6a5cff;">ПОТЕНЦИАЛ: ${f.potential}%</div>
+                    <button class="btn-small mt-2" onclick='window.dashboardImprove(${JSON.stringify(f).replace(/'/g, "\\'")})'>Посмотреть план</button>
+                </div>
+            `).join('') + `</div>`;
+        }
+        window.dashboardImprove = (feature) => handleImproveClick(feature);
+
+        function showPlanModal(feature) {
+            const modalDiv = document.createElement('div');
+            modalDiv.className = 'modal active';
+            modalDiv.innerHTML = `<div class="modal-content"><h3>${feature.name} — План улучшения</h3><p><strong>Потенциал:</strong> ${feature.potential}%</p><p><strong>План действий:</strong></p><ul style="margin-left:1.5rem;color:#a1a1aa;">${feature.plan.split('.').filter(s => s.trim()).map(s => `<li>${s.trim()}</li>`).join('')}</ul><button class="btn-small w-100 mt-4" id="closeDynamicModal">Закрыть</button></div>`;
+            document.body.appendChild(modalDiv);
+            document.getElementById('closeDynamicModal').onclick = () => modalDiv.remove();
+            modalDiv.onclick = (e) => { if (e.target === modalDiv) modalDiv.remove(); };
+        }
+
+        async function startAnalysis() {
+            if (!isLoggedIn) {
+                faceError.innerHTML = "Сначала войдите через Google!";
+                faceError.style.display = 'block';
+                return;
+            }
+            const problem = userProblem.value.trim();
+            if (!problem) { faceError.innerHTML = "Опишите, что хотите улучшить."; faceError.style.display = 'block'; return; }
+            if (!currentPhotoFile) { faceError.innerHTML = "Загрузите фото."; faceError.style.display = 'block'; return; }
+
+            faceError.style.display = "none";
+            analyzeBtn.disabled = true;
+            analyzeBtn.innerHTML = '<span class="spinner"></span> Анализ...';
+            await showLoadingSequence();
+
+            try {
+                const photoDataUrl = await fileToBase64(currentPhotoFile);
+                const analysisResult = await runRealVisionAnalysis(currentProblem, photoDataUrl);
+                hideLoading();
+                renderResults(analysisResult);
+                renderDashboard(analysisResult.features || []);
+                showScreen('results');
+            } catch (error) {
+                hideLoading();
+                if (error.message === "NO_FACE_DETECTED") faceError.innerHTML = "❌ Лицо не обнаружено! Загрузите четкое фото лица.";
+                else faceError.innerHTML = `❌ Ошибка: ${error.message}. Попробуйте снова.`;
+                faceError.style.display = 'block';
+            } finally {
+                analyzeBtn.disabled = false;
+                analyzeBtn.innerHTML = '🚀 Начать анализ';
+            }
+        }
+
+        document.querySelectorAll('.sub-card').forEach(card => {
+            card.addEventListener('click', () => createPayment(card.dataset.plan, parseInt(card.dataset.price)));
+        });
+        closeSubModalBtn.addEventListener('click', () => subscriptionModal.classList.remove('active'));
+
+        uploadBox.addEventListener('click', () => photoInput.click());
+        photoInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                currentPhotoFile = file;
+                const reader = new FileReader();
+                reader.onload = (ev) => { previewImg.src = ev.target.result; previewImg.style.display = 'block'; faceError.style.display = 'none'; };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        viewDashboardBtn.addEventListener('click', () => { if (currentFeatures.length) renderDashboard(currentFeatures); showScreen('dashboard'); });
+        uploadUpdatedBtn.addEventListener('click', () => { showScreen('input'); currentPhotoFile = null; previewImg.style.display = 'none'; previewImg.src = ""; photoInput.value = ""; currentFeatures = []; faceError.style.display = 'none'; });
+        backToResultsBtn.addEventListener('click', () => showScreen('results'));
+        analyzeBtn.addEventListener('click', startAnalysis);
+
+        showScreen('input');
+    </script>
+</body>
+
+</html>

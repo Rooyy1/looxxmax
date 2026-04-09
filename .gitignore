@@ -1,0 +1,23 @@
+# Зависимости
+node_modules/
+
+# Секреты
+.env
+*.env
+
+# Логи
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Python (если есть)
+__pycache__/
+*.pyc
+venv/
