@@ -6,44 +6,82 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware
 app.use(cors());
-app.use(express.json());
-app.use(express.static('.')); // Для обслуживания HTML файла
+app.use(express.json({ limit: '50mb' }));
+app.use(express.static('.'));
 
-// Данные для ЮKassa
-const shopId = process.env.YOOKASSA_SHOP_ID;
-const secretKey = process.env.YOOKASSA_SECRET_KEY;
+// Ключи из .env
+const SHOP_ID = process.env.YOOKASSA_SHOP_ID;
+const SECRET_KEY = process.env.YOOKASSA_SECRET_KEY;
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 
-// Создание платежа
+// Отдаем конфиг фронтенду
+app.get('/api/config', (req, res) => {
+    res.json({
+        googleClientId: GOOGLE_CLIENT_ID,
+        openAiApiKey: OPENAI_API_KEY
+    });
+});
+
+// Анализ лица через OpenAI
+app.post('/api/analyze-face', async (req, res) => {
+    try {
+        const { problem, photoDataUrl } = req.body;
+
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${OPENAI_API_KEY}`
+            },
+            body: JSON.stringify({
+                model: 'gpt-4o',
+                messages: [{
+                    role: "user",
+                    content: [
+                        {
+                            type: "text",
+                            text: `Верни ТОЛЬКО JSON. Если нет лица: {"error": "no_face"}. 
+                            Иначе: {"overall_potential": число, "features": [{"name": "Челюсть", "status": "...", "potential": число, "plan": "..."}, ...]}
+                            Пожелание: ${problem}`
+                        },
+                        { type: "image_url", image_url: { url: photoDataUrl, detail: "high" } }
+                    ]
+                }],
+                max_tokens: 2000,
+                temperature: 1.2
+            })
+        });
+
+        const data = await response.json();
+        const content = data.choices[0].message.content;
+
+        // Парсим JSON
+        const jsonMatch = content.match(/\{[\s\S]*\}/);
+        const result = JSON.parse(jsonMatch[0]);
+
+        res.json(result);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Создание платежа в ЮKassa
 app.post('/api/create-payment', async (req, res) => {
     try {
-        const { plan, amount, userId, userEmail } = req.body;
-
-        const idempotenceKey = crypto.randomUUID();
+        const { plan, amount, userId } = req.body;
 
         const paymentData = {
-            amount: {
-                value: amount.toString(),
-                currency: 'RUB'
-            },
-            payment_method_data: {
-                type: 'bank_card'
-            },
+            amount: { value: amount.toString(), currency: 'RUB' },
             confirmation: {
                 type: 'redirect',
-                return_url: `${process.env.SITE_URL || 'http://localhost:3000'}/?payment_success=true`
+                return_url: `${process.env.SITE_URL || 'http://localhost:3000'}?payment_success=true`
             },
-            description: `Подписка ${plan} для пользователя ${userId}`,
-            metadata: {
-                userId: userId,
-                plan: plan,
-                userEmail: userEmail
-            },
-            capture: true
+            description: `Подписка ${plan} для ${userId}`
         };
 
-        const auth = Buffer.from(`${shopId}:${secretKey}`).toString('base64');
+        const auth = Buffer.from(`${SHOP_ID}:${SECRET_KEY}`).toString('base64');
 
         const response = await fetch('https://api.yookassa.ru/v3/payments', {
             method: 'POST',
@@ -56,44 +94,15 @@ app.post('/api/create-payment', async (req, res) => {
 
         const data = await response.json();
 
-        if (data.error) {
-            throw new Error(data.error.description);
-        }
-
         res.json({
             success: true,
-            confirmationUrl: data.confirmation.confirmation_url,
-            paymentId: data.id
+            confirmationUrl: data.confirmation.confirmation_url
         });
-
     } catch (error) {
-        console.error('Payment creation error:', error);
-        res.status(500).json({
-            success: false,
-            error: error.message
-        });
-    }
-});
-
-// Webhook для уведомлений от ЮKassy (опционально)
-app.post('/api/webhook', async (req, res) => {
-    try {
-        const event = req.body;
-
-        if (event.event === 'payment.succeeded') {
-            const { metadata, id } = event.object;
-            console.log(`Платеж ${id} успешен! Пользователь: ${metadata.userId}, План: ${metadata.plan}`);
-            // Здесь можно сохранить в БД, отправить email и т.д.
-        }
-
-        res.status(200).send('OK');
-    } catch (error) {
-        console.error('Webhook error:', error);
-        res.status(500).send('Error');
+        res.status(500).json({ success: false, error: error.message });
     }
 });
 
 app.listen(PORT, () => {
-    console.log(`✅ Сервер запущен на http://localhost:${PORT}`);
-    console.log(`📱 Откройте: http://localhost:${PORT}`);
+    console.log(`✅ Сервер на http://localhost:${PORT}`);
 });
