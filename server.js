@@ -6,9 +6,21 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(cors());
+// РАСШИРЕННЫЕ НАСТРОЙКИ CORS
+app.use(cors({
+    origin: ['https://rooyy1.github.io', 'https://eraface.ru', 'http://localhost:3000'],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
+// Для preflight запросов
+app.options('*', cors());
+
 app.use(express.json({ limit: '50mb' }));
 app.use(express.static('.'));
+
+// ... остальной код такой же ...
 
 // Ключи из .env
 const SHOP_ID = process.env.YOOKASSA_SHOP_ID;
